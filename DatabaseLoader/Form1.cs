@@ -68,6 +68,8 @@ namespace DatabaseLoader
             columnsOfTableLabel.StyleManager = metroStyleManager;
             columnsOfTableTextBox.StyleManager = metroStyleManager;
             uniqueIndexPositionTextBox.StyleManager = metroStyleManager;
+            delimiterLabel.StyleManager = metroStyleManager;
+            delimiterTextBox.StyleManager = metroStyleManager;
         }
         private void ArrangeComponents()
         {
@@ -92,6 +94,7 @@ namespace DatabaseLoader
             addUniqueKeyCheckBox.Enabled = false;
             performStepCheckBox.Enabled = false;
             parseDateTimeCheckBox.Enabled = false;
+            delimiterTextBox.Enabled = false;
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
@@ -215,6 +218,13 @@ namespace DatabaseLoader
                                     dateTimeTypeCheckBox.Enabled = true;
                             };
                             dateTimeTypeCheckBox.Invoke(invokeAction);
+
+                            invokeAction = () =>
+                            {
+                                if (!delimiterTextBox.Enabled && isFileOpened)
+                                    delimiterTextBox.Enabled = true;
+                            };
+                            delimiterTextBox.Invoke(invokeAction);
                         }
                         else
                         {
@@ -258,45 +268,52 @@ namespace DatabaseLoader
 
                             invokeAction = () =>
                             {
-                                if (!columnsOfTableTextBox.Enabled && isFileOpened)
+                                if (columnsOfTableTextBox.Enabled && isFileOpened)
                                     columnsOfTableTextBox.Enabled = false;
                             };
                             columnsOfTableTextBox.Invoke(invokeAction);
 
                             invokeAction = () =>
                             {
-                                if (!performStepCheckBox.Enabled && isFileOpened)
+                                if (performStepCheckBox.Enabled && isFileOpened)
                                     performStepCheckBox.Enabled = false;
                             };
                             performStepCheckBox.Invoke(invokeAction);
 
                             invokeAction = () =>
                             {
-                                if (!parseDateTimeCheckBox.Enabled && isFileOpened)
+                                if (parseDateTimeCheckBox.Enabled && isFileOpened)
                                     parseDateTimeCheckBox.Enabled = false;
                             };
                             parseDateTimeCheckBox.Invoke(invokeAction);
 
                             invokeAction = () =>
                             {
-                                if (!addUniqueKeyCheckBox.Enabled && isFileOpened)
+                                if (addUniqueKeyCheckBox.Enabled && isFileOpened)
                                     addUniqueKeyCheckBox.Enabled = false;
                             };
                             addUniqueKeyCheckBox.Invoke(invokeAction);
 
                             invokeAction = () =>
                             {
-                                if (!uniqueIndexPositionTextBox.Enabled && isFileOpened)
+                                if (uniqueIndexPositionTextBox.Enabled && isFileOpened)
                                     uniqueIndexPositionTextBox.Enabled = false;
                             };
                             uniqueIndexPositionTextBox.Invoke(invokeAction);
 
                             invokeAction = () =>
                             {
-                                if (!dateTimeTypeCheckBox.Enabled)
+                                if (dateTimeTypeCheckBox.Enabled)
                                     dateTimeTypeCheckBox.Enabled = false;
                             };
                             dateTimeTypeCheckBox.Invoke(invokeAction);
+
+                            invokeAction = () =>
+                            {
+                                if (delimiterTextBox.Enabled && isFileOpened)
+                                    delimiterTextBox.Enabled = false;
+                            };
+                            delimiterTextBox.Invoke(invokeAction);
                         }
                         Action invokeAction2 = () =>
                         {
@@ -361,45 +378,52 @@ namespace DatabaseLoader
 
                         invokeAction = () =>
                         {
-                            if (!columnsOfTableTextBox.Enabled && isFileOpened)
+                            if (columnsOfTableTextBox.Enabled && isFileOpened)
                                 columnsOfTableTextBox.Enabled = false;
                         };
                         columnsOfTableTextBox.Invoke(invokeAction);
 
                         invokeAction = () =>
                         {
-                            if (!performStepCheckBox.Enabled && isFileOpened)
+                            if (performStepCheckBox.Enabled && isFileOpened)
                                 performStepCheckBox.Enabled = false;
                         };
                         performStepCheckBox.Invoke(invokeAction);
 
                         invokeAction = () =>
                         {
-                            if (!parseDateTimeCheckBox.Enabled && isFileOpened)
+                            if (parseDateTimeCheckBox.Enabled && isFileOpened)
                                 parseDateTimeCheckBox.Enabled = false;
                         };
                         parseDateTimeCheckBox.Invoke(invokeAction);
 
                         invokeAction = () =>
                         {
-                            if (!addUniqueKeyCheckBox.Enabled && isFileOpened)
+                            if (addUniqueKeyCheckBox.Enabled && isFileOpened)
                                 addUniqueKeyCheckBox.Enabled = false;
                         };
                         addUniqueKeyCheckBox.Invoke(invokeAction);
 
                         invokeAction = () =>
                         {
-                            if (!uniqueIndexPositionTextBox.Enabled && isFileOpened)
+                            if (uniqueIndexPositionTextBox.Enabled && isFileOpened)
                                 uniqueIndexPositionTextBox.Enabled = false;
                         };
                         uniqueIndexPositionTextBox.Invoke(invokeAction);
 
                         invokeAction = () =>
                         {
-                            if (!dateTimeTypeCheckBox.Enabled)
+                            if (dateTimeTypeCheckBox.Enabled)
                                 dateTimeTypeCheckBox.Enabled = false;
                         };
                         dateTimeTypeCheckBox.Invoke(invokeAction);
+
+                        invokeAction = () =>
+                        {
+                            if (delimiterTextBox.Enabled && isFileOpened)
+                                delimiterTextBox.Enabled = false;
+                        };
+                        delimiterTextBox.Invoke(invokeAction);
                     }
                 });
                 connectThread.Start();
@@ -505,10 +529,21 @@ namespace DatabaseLoader
 
                                             if (rowNotSkipped)
                                             {
-                                                int totalColumns = csvRow.Count(f => f.Equals(','));
-                                                totalColumns++;
+                                                int totalColumns = 0;
 
-                                                if (executeOnce)
+                                                if (Regex.IsMatch(delimiterTextBox.Text, @"^[\,\;\'\|\.\&\%\+\-\^\*\_]$"))
+                                                {
+                                                    totalColumns += csvRow.Count(f => f.Equals(delimiterTextBox.Text.ElementAt(0)));
+                                                    totalColumns++;
+                                                }
+                                                else
+                                                {
+                                                    csvRow.Count(f => f.Equals(','));
+                                                    totalColumns += csvRow.Count(f => f.Equals(';'));
+                                                    totalColumns++;
+                                                }                                                
+
+                                                if (executeOnce && totalColumns > 0)
                                                 {
                                                     executeOnce = false;
 
@@ -532,6 +567,7 @@ namespace DatabaseLoader
                                                 {
                                                     if (columnIndex < columnsOfCsv.Count && i != columnsOfCsv.ElementAt(columnIndex))
                                                     {
+
                                                         csvRowTemp = csvRowTemp.Substring(csvRowTemp.IndexOf(",") + 1);
                                                         columnIndex++;
                                                     }
@@ -554,7 +590,7 @@ namespace DatabaseLoader
                                                 }
 
                                                 //INSERT THE VALUES FROM ROW INTO SELECTED TABLE
-                                                if (DatabaseConn.CheckConnection())
+                                                if (DatabaseConn.CheckConnection() && values != null)
                                                 {
                                                     rowsAffected = DatabaseConn.InsertIntoTable(databaseName, tableName, values, columnsOfTable, parseDateTimeCheckBox.Checked, !dateTimeTypeCheckBox.Checked, addUniqueKeyCheckBox.Checked, addUniqueKeyCheckBox.Checked ? (!string.IsNullOrEmpty(uniqueIndexPositionTextBox.Text) && !string.IsNullOrWhiteSpace(uniqueIndexPositionTextBox.Text) ? uniqueIndexPositionTextBox.Text : "1") : "-1");
                                                     invokeAction = () => toolStripProgressBar.PerformStep();
@@ -680,6 +716,13 @@ namespace DatabaseLoader
                                                 dateTimeTypeCheckBox.Enabled = false;
                                         };
                                         dateTimeTypeCheckBox.Invoke(invokeAction);
+
+                                        invokeAction = () =>
+                                        {
+                                            if (delimiterTextBox.Enabled)
+                                                delimiterTextBox.Enabled = false;
+                                        };
+                                        delimiterTextBox.Invoke(invokeAction);
                                     }
                                 }
                             });
@@ -734,6 +777,9 @@ namespace DatabaseLoader
 
                         if (dateTimeTypeCheckBox.Enabled)
                             dateTimeTypeCheckBox.Enabled = false;
+
+                        if (delimiterTextBox.Enabled)
+                            delimiterTextBox.Enabled = false;
                     }
                 }
                 else
@@ -785,6 +831,9 @@ namespace DatabaseLoader
 
                     if (dateTimeTypeCheckBox.Enabled)
                         dateTimeTypeCheckBox.Enabled = false;
+
+                    if (delimiterTextBox.Enabled)
+                        delimiterTextBox.Enabled = false;
                 }
             }
             catch
@@ -836,6 +885,9 @@ namespace DatabaseLoader
 
                 if (dateTimeTypeCheckBox.Enabled)
                     dateTimeTypeCheckBox.Enabled = false;
+
+                if (delimiterTextBox.Enabled)
+                    delimiterTextBox.Enabled = false;
             }
         }
 
@@ -953,8 +1005,11 @@ namespace DatabaseLoader
                 if (!addUniqueKeyCheckBox.Enabled)
                     addUniqueKeyCheckBox.Enabled = true;
 
+                if (delimiterTextBox.Enabled)
+                    delimiterTextBox.Enabled = false;
+
                 if (!insertButton.Enabled && DatabaseConn.CheckConnection() && tableNameComboBox.SelectedItem != null)
-                    insertButton.Enabled = true;
+                    insertButton.Enabled = true;             
 
                 commandExecutionStatusLabel.Visible = false;
             }

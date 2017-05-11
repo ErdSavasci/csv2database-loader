@@ -59,6 +59,8 @@
             this.addUniqueKeyCheckBox = new MaterialSkin.Controls.MaterialCheckBox();
             this.uniqueIndexPositionTextBox = new MetroFramework.Controls.MetroTextBox();
             this.dateTimeTypeCheckBox = new MaterialSkin.Controls.MaterialCheckBox();
+            this.delimiterTextBox = new MetroFramework.Controls.MetroTextBox();
+            this.delimiterLabel = new MetroFramework.Controls.MetroLabel();
             this.statusStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.clearSelectedFilePictureBox)).BeginInit();
             this.SuspendLayout();
@@ -505,12 +507,56 @@
             this.dateTimeTypeCheckBox.Text = "Is INT";
             this.dateTimeTypeCheckBox.UseVisualStyleBackColor = true;
             // 
+            // delimiterTextBox
+            // 
+            // 
+            // 
+            // 
+            this.delimiterTextBox.CustomButton.Image = null;
+            this.delimiterTextBox.CustomButton.Location = new System.Drawing.Point(26, 1);
+            this.delimiterTextBox.CustomButton.Name = "";
+            this.delimiterTextBox.CustomButton.Size = new System.Drawing.Size(21, 21);
+            this.delimiterTextBox.CustomButton.Style = MetroFramework.MetroColorStyle.Blue;
+            this.delimiterTextBox.CustomButton.TabIndex = 1;
+            this.delimiterTextBox.CustomButton.Theme = MetroFramework.MetroThemeStyle.Light;
+            this.delimiterTextBox.CustomButton.UseSelectable = true;
+            this.delimiterTextBox.CustomButton.Visible = false;
+            this.delimiterTextBox.Lines = new string[0];
+            this.delimiterTextBox.Location = new System.Drawing.Point(179, 169);
+            this.delimiterTextBox.MaxLength = 32767;
+            this.delimiterTextBox.Name = "delimiterTextBox";
+            this.delimiterTextBox.PasswordChar = '\0';
+            this.delimiterTextBox.PromptText = "ex. ; or ,";
+            this.delimiterTextBox.ScrollBars = System.Windows.Forms.ScrollBars.None;
+            this.delimiterTextBox.SelectedText = "";
+            this.delimiterTextBox.SelectionLength = 0;
+            this.delimiterTextBox.SelectionStart = 0;
+            this.delimiterTextBox.ShortcutsEnabled = true;
+            this.delimiterTextBox.Size = new System.Drawing.Size(48, 23);
+            this.delimiterTextBox.TabIndex = 32;
+            this.delimiterTextBox.UseSelectable = true;
+            this.delimiterTextBox.WaterMark = "ex. ; or ,";
+            this.delimiterTextBox.WaterMarkColor = System.Drawing.Color.FromArgb(((int)(((byte)(109)))), ((int)(((byte)(109)))), ((int)(((byte)(109)))));
+            this.delimiterTextBox.WaterMarkFont = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Pixel);
+            // 
+            // delimiterLabel
+            // 
+            this.delimiterLabel.AutoSize = true;
+            this.delimiterLabel.Location = new System.Drawing.Point(117, 171);
+            this.delimiterLabel.Name = "delimiterLabel";
+            this.delimiterLabel.Size = new System.Drawing.Size(62, 19);
+            this.delimiterLabel.TabIndex = 33;
+            this.delimiterLabel.Text = "Delimiter";
+            this.delimiterLabel.WrapToLine = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(834, 436);
             this.ControlBox = false;
+            this.Controls.Add(this.delimiterLabel);
+            this.Controls.Add(this.delimiterTextBox);
             this.Controls.Add(this.dateTimeTypeCheckBox);
             this.Controls.Add(this.uniqueIndexPositionTextBox);
             this.Controls.Add(this.addUniqueKeyCheckBox);
@@ -588,6 +634,8 @@
         private MaterialSkin.Controls.MaterialCheckBox addUniqueKeyCheckBox;
         private MetroFramework.Controls.MetroTextBox uniqueIndexPositionTextBox;
         private MaterialSkin.Controls.MaterialCheckBox dateTimeTypeCheckBox;
+        private MetroFramework.Controls.MetroTextBox delimiterTextBox;
+        private MetroFramework.Controls.MetroLabel delimiterLabel;
     }
 }
 
