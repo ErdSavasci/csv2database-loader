@@ -214,7 +214,7 @@ namespace DatabaseLoader
 
                             invokeAction = () =>
                             {
-                                if (!dateTimeTypeCheckBox.Enabled && isFileOpened && addUniqueKeyCheckBox.Checked)
+                                if (!dateTimeTypeCheckBox.Enabled && isFileOpened && parseDateTimeCheckBox.Checked)
                                     dateTimeTypeCheckBox.Enabled = true;
                             };
                             dateTimeTypeCheckBox.Invoke(invokeAction);
@@ -254,49 +254,49 @@ namespace DatabaseLoader
 
                             invokeAction = () =>
                             {
-                                if (columnsOfCsvTextBox.Enabled && isFileOpened)
+                                if (columnsOfCsvTextBox.Enabled)
                                     columnsOfCsvTextBox.Enabled = false;
                             };
                             columnsOfCsvTextBox.Invoke(invokeAction);
 
                             invokeAction = () =>
                             {
-                                if (skipRowsTextBox.Enabled && isFileOpened)
+                                if (skipRowsTextBox.Enabled)
                                     skipRowsTextBox.Enabled = false;
                             };
                             skipRowsTextBox.Invoke(invokeAction);
 
                             invokeAction = () =>
                             {
-                                if (columnsOfTableTextBox.Enabled && isFileOpened)
+                                if (columnsOfTableTextBox.Enabled)
                                     columnsOfTableTextBox.Enabled = false;
                             };
                             columnsOfTableTextBox.Invoke(invokeAction);
 
                             invokeAction = () =>
                             {
-                                if (performStepCheckBox.Enabled && isFileOpened)
+                                if (performStepCheckBox.Enabled)
                                     performStepCheckBox.Enabled = false;
                             };
                             performStepCheckBox.Invoke(invokeAction);
 
                             invokeAction = () =>
                             {
-                                if (parseDateTimeCheckBox.Enabled && isFileOpened)
+                                if (parseDateTimeCheckBox.Enabled)
                                     parseDateTimeCheckBox.Enabled = false;
                             };
                             parseDateTimeCheckBox.Invoke(invokeAction);
 
                             invokeAction = () =>
                             {
-                                if (addUniqueKeyCheckBox.Enabled && isFileOpened)
+                                if (addUniqueKeyCheckBox.Enabled)
                                     addUniqueKeyCheckBox.Enabled = false;
                             };
                             addUniqueKeyCheckBox.Invoke(invokeAction);
 
                             invokeAction = () =>
                             {
-                                if (uniqueIndexPositionTextBox.Enabled && isFileOpened)
+                                if (uniqueIndexPositionTextBox.Enabled)
                                     uniqueIndexPositionTextBox.Enabled = false;
                             };
                             uniqueIndexPositionTextBox.Invoke(invokeAction);
@@ -310,7 +310,7 @@ namespace DatabaseLoader
 
                             invokeAction = () =>
                             {
-                                if (delimiterTextBox.Enabled && isFileOpened)
+                                if (delimiterTextBox.Enabled)
                                     delimiterTextBox.Enabled = false;
                             };
                             delimiterTextBox.Invoke(invokeAction);
@@ -364,49 +364,49 @@ namespace DatabaseLoader
 
                         invokeAction = () =>
                         {
-                            if (columnsOfCsvTextBox.Enabled && isFileOpened)
+                            if (columnsOfCsvTextBox.Enabled)
                                 columnsOfCsvTextBox.Enabled = false;
                         };
                         columnsOfCsvTextBox.Invoke(invokeAction);
 
                         invokeAction = () =>
                         {
-                            if (skipRowsTextBox.Enabled && isFileOpened)
+                            if (skipRowsTextBox.Enabled)
                                 skipRowsTextBox.Enabled = false;
                         };
                         skipRowsTextBox.Invoke(invokeAction);
 
                         invokeAction = () =>
                         {
-                            if (columnsOfTableTextBox.Enabled && isFileOpened)
+                            if (columnsOfTableTextBox.Enabled)
                                 columnsOfTableTextBox.Enabled = false;
                         };
                         columnsOfTableTextBox.Invoke(invokeAction);
 
                         invokeAction = () =>
                         {
-                            if (performStepCheckBox.Enabled && isFileOpened)
+                            if (performStepCheckBox.Enabled)
                                 performStepCheckBox.Enabled = false;
                         };
                         performStepCheckBox.Invoke(invokeAction);
 
                         invokeAction = () =>
                         {
-                            if (parseDateTimeCheckBox.Enabled && isFileOpened)
+                            if (parseDateTimeCheckBox.Enabled)
                                 parseDateTimeCheckBox.Enabled = false;
                         };
                         parseDateTimeCheckBox.Invoke(invokeAction);
 
                         invokeAction = () =>
                         {
-                            if (addUniqueKeyCheckBox.Enabled && isFileOpened)
+                            if (addUniqueKeyCheckBox.Enabled)
                                 addUniqueKeyCheckBox.Enabled = false;
                         };
                         addUniqueKeyCheckBox.Invoke(invokeAction);
 
                         invokeAction = () =>
                         {
-                            if (uniqueIndexPositionTextBox.Enabled && isFileOpened)
+                            if (uniqueIndexPositionTextBox.Enabled)
                                 uniqueIndexPositionTextBox.Enabled = false;
                         };
                         uniqueIndexPositionTextBox.Invoke(invokeAction);
@@ -478,6 +478,7 @@ namespace DatabaseLoader
                         dynamic[] values = null;
                         bool executeOnce = true;
                         bool rowNotSkipped;
+                        bool isDelimeterEntered = false;
 
                         int columnIndex = 0;
                         int rowIndex = 1;
@@ -486,7 +487,7 @@ namespace DatabaseLoader
 
                         if (performStepCheckBox.Checked && columnsOfCsv != null)
                         {
-                            stepCount = columnsOfCsv[0];
+                            stepCount = skipRowsOfCsv[0];
                         }
 
                         if (readCsvThread == null || !readCsvThread.IsAlive)
@@ -533,6 +534,7 @@ namespace DatabaseLoader
 
                                                 if (Regex.IsMatch(delimiterTextBox.Text, @"^[\,\;\'\|\.\&\%\+\-\^\*\_]$"))
                                                 {
+                                                    isDelimeterEntered = true;
                                                     totalColumns += csvRow.Count(f => f.Equals(delimiterTextBox.Text.ElementAt(0)));
                                                     totalColumns++;
                                                 }
@@ -567,15 +569,32 @@ namespace DatabaseLoader
                                                 {
                                                     if (columnIndex < columnsOfCsv.Count && i != columnsOfCsv.ElementAt(columnIndex))
                                                     {
-
-                                                        csvRowTemp = csvRowTemp.Substring(csvRowTemp.IndexOf(",") + 1);
+                                                        //GO TO NEXT ELEMENT
+                                                        if (isDelimeterEntered)
+                                                            csvRowTemp = csvRowTemp.Substring(csvRowTemp.IndexOf(delimiterTextBox.Text.ElementAt(0)) + 1);
+                                                        else
+                                                        {
+                                                            if (csvRowTemp.Contains(","))
+                                                                csvRowTemp = csvRowTemp.Substring(csvRowTemp.IndexOf(",") + 1);
+                                                            else if (csvRowTemp.Contains(";"))
+                                                                csvRowTemp = csvRowTemp.Substring(csvRowTemp.IndexOf(";") + 1);
+                                                        }
                                                         columnIndex++;
                                                     }
                                                     else if (valueIndex < values.Length)
                                                     {
-                                                        if (!csvRowTemp.StartsWith(","))
+                                                        if ((!isDelimeterEntered && !csvRowTemp.StartsWith(",") && !csvRowTemp.StartsWith(";")) || (isDelimeterEntered && !csvRowTemp.StartsWith(delimiterTextBox.Text.ElementAt(0).ToString())))
                                                         {
-                                                            values[valueIndex] = csvRowTemp.Substring(0, csvRowTemp.IndexOf(","));
+                                                            if (isDelimeterEntered)
+                                                                values[valueIndex] = csvRowTemp.Substring(0, csvRowTemp.IndexOf(delimiterTextBox.Text.ElementAt(0)));
+                                                            else
+                                                            {
+                                                                if (csvRowTemp.Contains(","))
+                                                                    values[valueIndex] = csvRowTemp.Substring(0, csvRowTemp.IndexOf(","));
+                                                                else if (csvRowTemp.Contains(";"))
+                                                                    values[valueIndex] = csvRowTemp.Substring(0, csvRowTemp.IndexOf(";"));
+                                                            }
+                                                           
                                                             valueIndex++;
                                                         }
                                                         else
@@ -584,7 +603,17 @@ namespace DatabaseLoader
                                                             valueIndex++;
                                                         }
 
-                                                        csvRowTemp = csvRowTemp.Substring(csvRowTemp.IndexOf(",") + 1);
+                                                        //GO TO NEXT ELEMENT
+                                                        if (isDelimeterEntered)
+                                                            csvRowTemp = csvRowTemp.Substring(csvRowTemp.IndexOf(delimiterTextBox.Text.ElementAt(0)) + 1);
+                                                        else
+                                                        {
+                                                            if (csvRowTemp.Contains(","))
+                                                                csvRowTemp = csvRowTemp.Substring(csvRowTemp.IndexOf(",") + 1);
+                                                            else if (csvRowTemp.Contains(";"))
+                                                                csvRowTemp = csvRowTemp.Substring(csvRowTemp.IndexOf(";") + 1);
+                                                        }
+
                                                         columnIndex++;
                                                     }
                                                 }
@@ -602,8 +631,8 @@ namespace DatabaseLoader
                                             columnIndex = 0;                                          
                                             rowIndex++;
 
-                                            if (stepCount > 0 && columnsOfCsv.Count > 1)
-                                                stepCount += columnsOfCsv[1];
+                                            if (stepCount > 0 && skipRowsOfCsv.Count > 1)
+                                                stepCount += skipRowsOfCsv[1];
                                         }
 
                                         if (rowsAffected != -1)
@@ -1053,11 +1082,11 @@ namespace DatabaseLoader
         {
             if (performStepCheckBox.Checked)
             {
-                columnsOfCsvTextBox.WaterMark = "ex. 1 or 1,2 (Start Index, Step Index)";
+                skipRowsTextBox.WaterMark = "ex. 1 or 1,2 (Start Index, Step Index)";
             }
             else
             {
-                columnsOfCsvTextBox.WaterMark = "ex. 1,2,3 or 1,2-9";
+                skipRowsTextBox.WaterMark = "ex. 1,2,3 or 1,2-9";
             }
         }
 
