@@ -48,19 +48,23 @@
   <ItemGroup>
     <Reference Include="MaterialSkin, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\Downloads\MaterialSkin-master (1)\MaterialSkin-master\MaterialSkin\bin\Debug\MaterialSkin.dll</HintPath>
+      <HintPath>..\packages\MaterialSkin.1.0.0.0\MaterialSkin.dll</HintPath>
     </Reference>
-    <Reference Include="MetroFramework">
-      <HintPath>..\..\..\..\..\..\Documents\Visual Studio 2015\Projects\MoveCursorByHand\MoveCursorByHand\bin\Debug\MetroFramework.dll</HintPath>
+    <Reference Include="MetroFramework, Version=1.4.0.0, Culture=neutral, PublicKeyToken=5f91a84759bf584a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\MetroFramework.1.4.0.0\MetroFramework.dll</HintPath>
     </Reference>
-    <Reference Include="MetroFramework.Design">
-      <HintPath>..\..\..\..\..\..\Documents\Visual Studio 2015\Projects\MoveCursorByHand\MoveCursorByHand\bin\Debug\MetroFramework.Design.dll</HintPath>
+    <Reference Include="MetroFramework.Design, Version=1.4.0.0, Culture=neutral, PublicKeyToken=5f91a84759bf584a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\MetroFramework.1.4.0.0\MetroFramework.Design.dll</HintPath>
     </Reference>
-    <Reference Include="MetroFramework.Fonts">
-      <HintPath>..\..\..\..\..\..\Documents\Visual Studio 2015\Projects\MoveCursorByHand\MoveCursorByHand\bin\Debug\MetroFramework.Fonts.dll</HintPath>
+    <Reference Include="MetroFramework.Fonts, Version=1.4.0.0, Culture=neutral, PublicKeyToken=5f91a84759bf584a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\MetroFramework.1.4.0.0\MetroFramework.Fonts.dll</HintPath>
     </Reference>
-    <Reference Include="MRG.Controls.UI">
-      <HintPath>..\..\..\..\..\..\Downloads\MRGLoadingCirclesrc\LoadingCircle\MRG.Controls.UI\bin\Debug\MRG.Controls.UI.dll</HintPath>
+    <Reference Include="MRG.Controls.UI, Version=1.0.6337.6132, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\MRGControls.UI.1.0.6337.6132\MRG.Controls.UI.dll</HintPath>
     </Reference>
     <Reference Include="Simple.Data, Version=0.19.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Simple.Data.Core.0.19.0.0\lib\net40\Simple.Data.dll</HintPath>
