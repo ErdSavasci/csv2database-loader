@@ -65,6 +65,7 @@
             this.uniqueIndexPositionLabel = new MetroFramework.Controls.MetroLabel();
             this.uniqueIndexStartValueLabel = new MetroFramework.Controls.MetroLabel();
             this.selectRowIndexesCheckBox = new MaterialSkin.Controls.MaterialCheckBox();
+            this.differentValuesCheckBox = new MaterialSkin.Controls.MaterialCheckBox();
             this.statusStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.clearSelectedFilePictureBox)).BeginInit();
             this.SuspendLayout();
@@ -256,7 +257,7 @@
             // 
             // 
             this.columnsOfCsvTextBox.CustomButton.Image = null;
-            this.columnsOfCsvTextBox.CustomButton.Location = new System.Drawing.Point(224, 1);
+            this.columnsOfCsvTextBox.CustomButton.Location = new System.Drawing.Point(267, 1);
             this.columnsOfCsvTextBox.CustomButton.Name = "";
             this.columnsOfCsvTextBox.CustomButton.Size = new System.Drawing.Size(21, 21);
             this.columnsOfCsvTextBox.CustomButton.Style = MetroFramework.MetroColorStyle.Blue;
@@ -275,7 +276,7 @@
             this.columnsOfCsvTextBox.SelectionLength = 0;
             this.columnsOfCsvTextBox.SelectionStart = 0;
             this.columnsOfCsvTextBox.ShortcutsEnabled = true;
-            this.columnsOfCsvTextBox.Size = new System.Drawing.Size(252, 23);
+            this.columnsOfCsvTextBox.Size = new System.Drawing.Size(289, 23);
             this.columnsOfCsvTextBox.TabIndex = 16;
             this.columnsOfCsvTextBox.UseSelectable = true;
             this.columnsOfCsvTextBox.WaterMark = "ex. 1,2,3 or 1,2-9";
@@ -318,7 +319,7 @@
             // 
             // 
             this.skipRowsTextBox.CustomButton.Image = null;
-            this.skipRowsTextBox.CustomButton.Location = new System.Drawing.Point(224, 1);
+            this.skipRowsTextBox.CustomButton.Location = new System.Drawing.Point(267, 1);
             this.skipRowsTextBox.CustomButton.Name = "";
             this.skipRowsTextBox.CustomButton.Size = new System.Drawing.Size(21, 21);
             this.skipRowsTextBox.CustomButton.Style = MetroFramework.MetroColorStyle.Blue;
@@ -327,7 +328,7 @@
             this.skipRowsTextBox.CustomButton.UseSelectable = true;
             this.skipRowsTextBox.CustomButton.Visible = false;
             this.skipRowsTextBox.Lines = new string[0];
-            this.skipRowsTextBox.Location = new System.Drawing.Point(29, 306);
+            this.skipRowsTextBox.Location = new System.Drawing.Point(23, 306);
             this.skipRowsTextBox.MaxLength = 32767;
             this.skipRowsTextBox.Name = "skipRowsTextBox";
             this.skipRowsTextBox.PasswordChar = '\0';
@@ -337,7 +338,7 @@
             this.skipRowsTextBox.SelectionLength = 0;
             this.skipRowsTextBox.SelectionStart = 0;
             this.skipRowsTextBox.ShortcutsEnabled = true;
-            this.skipRowsTextBox.Size = new System.Drawing.Size(246, 23);
+            this.skipRowsTextBox.Size = new System.Drawing.Size(289, 23);
             this.skipRowsTextBox.TabIndex = 21;
             this.skipRowsTextBox.UseSelectable = true;
             this.skipRowsTextBox.WaterMark = "ex. 1,2,3 or 1,2-9";
@@ -347,7 +348,7 @@
             // skipRowLabel
             // 
             this.skipRowLabel.AutoSize = true;
-            this.skipRowLabel.Location = new System.Drawing.Point(23, 274);
+            this.skipRowLabel.Location = new System.Drawing.Point(20, 274);
             this.skipRowLabel.Name = "skipRowLabel";
             this.skipRowLabel.Size = new System.Drawing.Size(62, 19);
             this.skipRowLabel.TabIndex = 22;
@@ -417,7 +418,7 @@
             this.performStepCheckBox.Depth = 0;
             this.performStepCheckBox.Font = new System.Drawing.Font("Roboto", 10F);
             this.performStepCheckBox.ForeColor = System.Drawing.SystemColors.MenuHighlight;
-            this.performStepCheckBox.Location = new System.Drawing.Point(96, 272);
+            this.performStepCheckBox.Location = new System.Drawing.Point(129, 271);
             this.performStepCheckBox.Margin = new System.Windows.Forms.Padding(0);
             this.performStepCheckBox.MouseLocation = new System.Drawing.Point(-1, -1);
             this.performStepCheckBox.MouseState = MaterialSkin.MouseState.HOVER;
@@ -517,7 +518,7 @@
             // 
             // 
             this.delimiterTextBox.CustomButton.Image = null;
-            this.delimiterTextBox.CustomButton.Location = new System.Drawing.Point(26, 1);
+            this.delimiterTextBox.CustomButton.Location = new System.Drawing.Point(50, 1);
             this.delimiterTextBox.CustomButton.Name = "";
             this.delimiterTextBox.CustomButton.Size = new System.Drawing.Size(21, 21);
             this.delimiterTextBox.CustomButton.Style = MetroFramework.MetroColorStyle.Blue;
@@ -608,7 +609,7 @@
             this.selectRowIndexesCheckBox.Depth = 0;
             this.selectRowIndexesCheckBox.Font = new System.Drawing.Font("Roboto", 10F);
             this.selectRowIndexesCheckBox.ForeColor = System.Drawing.SystemColors.MenuHighlight;
-            this.selectRowIndexesCheckBox.Location = new System.Drawing.Point(209, 272);
+            this.selectRowIndexesCheckBox.Location = new System.Drawing.Point(242, 271);
             this.selectRowIndexesCheckBox.Margin = new System.Windows.Forms.Padding(0);
             this.selectRowIndexesCheckBox.MouseLocation = new System.Drawing.Point(-1, -1);
             this.selectRowIndexesCheckBox.MouseState = MaterialSkin.MouseState.HOVER;
@@ -620,12 +621,29 @@
             this.selectRowIndexesCheckBox.UseVisualStyleBackColor = true;
             this.selectRowIndexesCheckBox.CheckStateChanged += new System.EventHandler(this.selectRowIndexesCheckBox_CheckStateChanged);
             // 
+            // differentValuesCheckBox
+            // 
+            this.differentValuesCheckBox.Depth = 0;
+            this.differentValuesCheckBox.Font = new System.Drawing.Font("Roboto", 10F);
+            this.differentValuesCheckBox.ForeColor = System.Drawing.SystemColors.MenuHighlight;
+            this.differentValuesCheckBox.Location = new System.Drawing.Point(181, 339);
+            this.differentValuesCheckBox.Margin = new System.Windows.Forms.Padding(0);
+            this.differentValuesCheckBox.MouseLocation = new System.Drawing.Point(-1, -1);
+            this.differentValuesCheckBox.MouseState = MaterialSkin.MouseState.HOVER;
+            this.differentValuesCheckBox.Name = "differentValuesCheckBox";
+            this.differentValuesCheckBox.Ripple = true;
+            this.differentValuesCheckBox.Size = new System.Drawing.Size(129, 25);
+            this.differentValuesCheckBox.TabIndex = 38;
+            this.differentValuesCheckBox.Text = "Different Values";
+            this.differentValuesCheckBox.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(834, 436);
             this.ControlBox = false;
+            this.Controls.Add(this.differentValuesCheckBox);
             this.Controls.Add(this.selectRowIndexesCheckBox);
             this.Controls.Add(this.uniqueIndexStartValueLabel);
             this.Controls.Add(this.uniqueIndexPositionLabel);
@@ -715,6 +733,7 @@
         private MetroFramework.Controls.MetroLabel uniqueIndexPositionLabel;
         private MetroFramework.Controls.MetroLabel uniqueIndexStartValueLabel;
         private MaterialSkin.Controls.MaterialCheckBox selectRowIndexesCheckBox;
+        private MaterialSkin.Controls.MaterialCheckBox differentValuesCheckBox;
     }
 }
 
