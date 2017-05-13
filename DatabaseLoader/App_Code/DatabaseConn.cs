@@ -126,10 +126,17 @@ namespace DatabaseLoader.App_Code
                         commandParameterCount++;
                     }
 
-                    DateTime dateTimeValue;
+                    DateTime futureInitialDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day + 1, DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second);
+                    DateTime dateTimeValue = futureInitialDate;
                     int dateTimeCount = 0;
-                    bool parsed = DateTime.TryParse(values[valueIndex].ToString(), out dateTimeValue);
-                    if (parseDateTime && parsed)
+                    bool parsed = false;
+                    try
+                    {
+                        DateTime.TryParse(values[valueIndex].ToString(), out dateTimeValue);
+                        parsed = true;
+                    }
+                    catch   { }
+                    if (parseDateTime && parsed && !dateTimeValue.Equals(futureInitialDate))
                     {
                         DataRowCollection dataRowCollection = columnsOfSpecifiedTable.Rows;
                         foreach (DataRow dataRow in dataRowCollection)
@@ -269,9 +276,9 @@ namespace DatabaseLoader.App_Code
                         }
                         valueIndex++;
                     }
-                    else if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), values[commandParameterCount])))
+                    else if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), values[valueIndex])))
                     {
-                        sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), Convert.ChangeType(values[commandParameterCount], columnDataType)));
+                        sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), Convert.ChangeType(values[valueIndex], columnDataType)));
                         commandParameterCount++;
                         valueIndex++;
                     }
@@ -280,8 +287,10 @@ namespace DatabaseLoader.App_Code
                 int rowsAffected = sqlCommand.ExecuteNonQuery();
                 return rowsAffected;
             }
-            catch
+            catch(Exception ex)
             {
+                MessageBox.Show(ex.StackTrace);
+
                 return 0;
             }
         }

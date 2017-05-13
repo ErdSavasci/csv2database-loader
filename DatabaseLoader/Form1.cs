@@ -101,6 +101,7 @@ namespace DatabaseLoader
             dateTimeTypeCheckBox.Enabled = false;
             uniqueIndexStartValueTextBox.Enabled = false;
             selectRowIndexesCheckBox.Enabled = false;
+            differentValuesCheckBox.Enabled = false;
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
@@ -152,12 +153,12 @@ namespace DatabaseLoader
                             {
                                 if (!tableNameComboBox.Enabled)
                                 {
-                                    tableNameComboBox.Enabled = true;
-                                    tableNameComboBox.Invalidate();
+                                    tableNameComboBox.Enabled = true;                                    
                                 }
                                 if (tableNameComboBox.Items.Count > 0)
                                     tableNameComboBox.Items.Clear();
                                 tableNameComboBox.Items.AddRange(DatabaseConn.GetAllTables().ToArray());
+                                tableNameComboBox.Invalidate();
                             };
                             tableNameComboBox.Invoke(invokeAction);
 
@@ -268,11 +269,11 @@ namespace DatabaseLoader
                             {
                                 if (tableNameComboBox.Enabled)
                                 {
-                                    tableNameComboBox.Enabled = false;
-                                    tableNameComboBox.Invalidate();
+                                    tableNameComboBox.Enabled = false;                                    
                                 }
                                 if (tableNameComboBox.Items.Count > 0)
                                     tableNameComboBox.Items.Clear();
+                                tableNameComboBox.Invalidate();
                             };
                             tableNameComboBox.Invoke(invokeAction);
 
@@ -545,6 +546,7 @@ namespace DatabaseLoader
 
                         //GATHERING DATA FROM CSV FILE
                         dynamic[] values = null;
+                        List<dynamic[]> valuesSame = null;
                         bool executeOnce = true;
                         bool rowNotSkipped;
                         bool isDelimeterEntered = false;
@@ -554,11 +556,6 @@ namespace DatabaseLoader
                         int valueIndex = 0;
                         int stepCount = -1;
                         int lastRange = -1;
-
-                        if (performStepCheckBox.Checked && columnsOfCsv != null)
-                        {
-                            stepCount = skipRowsOfCsv[0];
-                        }
 
                         if (readCsvThread == null || !readCsvThread.IsAlive)
                         {
@@ -587,31 +584,37 @@ namespace DatabaseLoader
                                 invokeAction = () => tableNameComboBox.Enabled = false;
                                 tableNameComboBox.Invoke(invokeAction);
 
-                                columnsOfCsv = ParseColumnOrRowIndexes(columnsOfCsvTextBox.Text);
-                                skipRowsOfCsv = ParseColumnOrRowIndexes(skipRowsTextBox.Text);
-                                columnsOfTable = ParseColumnOrRowIndexes(columnsOfTableTextBox.Text);
-
-                                string csvRow = "";
-
                                 if (csvStream != null)
                                 {
+                                    columnsOfCsv = ParseColumnOrRowIndexes(columnsOfCsvTextBox.Text);
+                                    skipRowsOfCsv = ParseColumnOrRowIndexes(skipRowsTextBox.Text);
+                                    columnsOfTable = ParseColumnOrRowIndexes(columnsOfTableTextBox.Text);
+
+                                    if (performStepCheckBox.Checked && columnsOfCsv != null)
+                                    {
+                                        stepCount = skipRowsOfCsv[0];
+                                    }
+
+                                    string csvRow = "";
+                                    valuesSame = new List<dynamic[]>();
+
                                     using (StreamReader streamReader = new StreamReader(csvStream))
                                     {
                                         int lineCount = File.ReadAllLines(selectedFileLink.Text).Count();
                                         if (skipRowsOfCsv != null)
                                         {
-                                            if(selectRowIndexesCheckBox.Checked)
+                                            if (!selectRowIndexesCheckBox.Checked)
                                                 lineCount -= skipRowsOfCsv.Count;
-                                            else
-                                                lineCount = skipRowsOfCsv.Count;
                                         }
 
                                         invokeAction = () => toolStripProgressBar.Maximum = lineCount;
                                         statusStrip.Invoke(invokeAction);
 
                                         bool rowFound;
+                                        bool containsSameValue;
                                         while ((csvRow = streamReader.ReadLine()) != null)
                                         {
+                                            containsSameValue = false;
                                             rowNotSkipped = true;
                                             rowFound = false;
 
@@ -623,13 +626,8 @@ namespace DatabaseLoader
                                                     {
                                                         if (performStepCheckBox.Checked)
                                                         {
-                                                            if (rowIndex == stepCount)
+                                                            if ((skipRowsOfCsv.Count > 1 && rowIndex == stepCount) || (skipRowsOfCsv.Count == 1 && rowIndex >= stepCount))
                                                             {
-                                                                if (selectRowIndexesCheckBox.Checked)
-                                                                    rowNotSkipped = true;
-                                                                else
-                                                                    rowNotSkipped = false;
-
                                                                 rowFound = true;
                                                             }
                                                         }
@@ -637,11 +635,6 @@ namespace DatabaseLoader
                                                         {
                                                             if (rowIndex == skipRowsOfCsv.ElementAt(i))
                                                             {
-                                                                if (selectRowIndexesCheckBox.Checked)
-                                                                    rowNotSkipped = true;
-                                                                else
-                                                                    rowNotSkipped = false;
-
                                                                 rowFound = true;
                                                             }
                                                             else if ((rowIndex == skipRowsOfCsv.ElementAt(i) * -1) || (lastRange != -1 && rowIndex <= lastRange))
@@ -651,36 +644,31 @@ namespace DatabaseLoader
                                                                 else if (rowIndex == lastRange)
                                                                     lastRange = -1;
 
-                                                                if (selectRowIndexesCheckBox.Checked)
-                                                                    rowNotSkipped = true;
-                                                                else
-                                                                    rowNotSkipped = false;
-
                                                                 rowFound = true;
                                                             }
                                                         }
                                                     }
-                                                }
 
-                                                if (rowFound)
-                                                {
-                                                    if (selectRowIndexesCheckBox.Checked)
-                                                        rowNotSkipped = true;
+                                                    if (rowFound)
+                                                    {
+                                                        if (selectRowIndexesCheckBox.Checked)
+                                                            rowNotSkipped = true;
+                                                        else
+                                                            rowNotSkipped = false;
+                                                    }
                                                     else
-                                                        rowNotSkipped = false;
+                                                    {
+                                                        if (selectRowIndexesCheckBox.Checked)
+                                                            rowNotSkipped = false;
+                                                        else
+                                                            rowNotSkipped = true;
+                                                    }
                                                 }
-                                                else
-                                                {
-                                                    if (selectRowIndexesCheckBox.Checked)
-                                                        rowNotSkipped = false;
-                                                    else
-                                                        rowNotSkipped = true;
-                                                }
-                                            }                                           
+                                            }
 
                                             if (rowNotSkipped)
                                             {
-                                                Console.WriteLine("Row: " + rowIndex);
+                                                //Console.WriteLine("Row: " + rowIndex);
 
                                                 int totalColumns = 0;
 
@@ -701,10 +689,10 @@ namespace DatabaseLoader
                                                     {
                                                         totalColumns = csvRow.Count(f => f.Equals(';'));
                                                         totalColumns++;
-                                                    }                                                
+                                                    }
                                                 }
 
-                                                if (executeOnce && totalColumns > 0)
+                                                if (totalColumns > 0)
                                                 {
                                                     executeOnce = false;
 
@@ -714,20 +702,15 @@ namespace DatabaseLoader
                                                     }
                                                     else
                                                     {
-                                                        columnsOfCsv = new List<int>();
-                                                        for (int i = 1; i <= totalColumns; i++)
-                                                        {
-                                                            columnsOfCsv.Add(i);
-                                                        }
-                                                        values = new object[columnsOfCsv.Count];
+                                                        values = new object[totalColumns];
                                                     }
                                                 }
 
-                                                lastRange = -1;                      
+                                                lastRange = -1;
                                                 string csvRowTemp = csvRow;
                                                 for (int i = 1; i <= totalColumns; i++)
                                                 {
-                                                    if (columnIndex < columnsOfCsv.Count && ((i != columnsOfCsv.ElementAt(columnIndex) && i != columnsOfCsv.ElementAt(columnIndex) * -1) || (lastRange != -1 && i > lastRange)))
+                                                    if (values != null && columnsOfCsv != null && columnIndex < columnsOfCsv.Count && ((i != columnsOfCsv.ElementAt(columnIndex) && i != columnsOfCsv.ElementAt(columnIndex) * -1) || (lastRange != -1 && i > lastRange)))
                                                     {
                                                         //GO TO NEXT ELEMENT
                                                         if (isDelimeterEntered)
@@ -740,15 +723,12 @@ namespace DatabaseLoader
                                                                 csvRowTemp = csvRowTemp.Substring(csvRowTemp.IndexOf(";") + 1);
                                                         }
                                                     }
-                                                    else if (valueIndex < values.Length)
+                                                    else if (values != null && valueIndex < values.Length)
                                                     {
                                                         if ((!isDelimeterEntered && !csvRowTemp.StartsWith(",") && !csvRowTemp.StartsWith(";")) || (isDelimeterEntered && !csvRowTemp.StartsWith(delimiterTextBox.Text.ElementAt(0).ToString())))
                                                         {
                                                             if (isDelimeterEntered)
-                                                            {
-                                                                if(!values.Contains(csvRowTemp.Substring(0, csvRowTemp.IndexOf(delimiterTextBox.Text.ElementAt(0))).Replace("\"\"", "")))
-                                                                    values[valueIndex] = csvRowTemp.Substring(0, csvRowTemp.IndexOf(delimiterTextBox.Text.ElementAt(0))).Replace("\"\"", "");
-                                                            }
+                                                                values[valueIndex] = csvRowTemp.Substring(0, csvRowTemp.IndexOf(delimiterTextBox.Text.ElementAt(0))).Replace("\"\"", "");
                                                             else
                                                             {
                                                                 if (csvRowTemp.Contains(","))
@@ -776,7 +756,7 @@ namespace DatabaseLoader
                                                                 csvRowTemp = csvRowTemp.Substring(csvRowTemp.IndexOf(";") + 1);
                                                         }
 
-                                                        if (i == columnsOfCsv.ElementAt(columnIndex) * -1)
+                                                        if (columnsOfCsv != null && columnIndex < columnsOfCsv.Count && i == columnsOfCsv.ElementAt(columnIndex) * -1)
                                                         {
                                                             if (lastRange == -1)
                                                                 lastRange = columnsOfCsv.ElementAt(columnIndex + 1);
@@ -785,15 +765,32 @@ namespace DatabaseLoader
                                                         }
 
                                                         columnIndex++;
-                                                    }                                                   
+                                                    }
                                                 }
 
-                                                //INSERT THE VALUES FROM ROW INTO SELECTED TABLE
-                                                if (DatabaseConn.CheckConnection() && values != null)
+                                                for (int i = 0; i < valuesSame.Count(); i++)
                                                 {
-                                                    rowsAffected = DatabaseConn.InsertIntoTable(databaseName, tableName, values, columnsOfTable, parseDateTimeCheckBox.Checked, !dateTimeTypeCheckBox.Checked, addUniqueKeyCheckBox.Checked, addUniqueKeyCheckBox.Checked ? (!string.IsNullOrEmpty(uniqueIndexPositionTextBox.Text) && !string.IsNullOrWhiteSpace(uniqueIndexPositionTextBox.Text) ? uniqueIndexPositionTextBox.Text : "1") : "-1");
-                                                    invokeAction = () => toolStripProgressBar.PerformStep();
-                                                    statusStrip.Invoke(invokeAction);
+                                                    for (int j = 0; j < values.Count(); j++)
+                                                    {
+                                                        if (valuesSame.ElementAt(i)[j] == values[j])
+                                                            containsSameValue = true;
+                                                        else
+                                                            containsSameValue = false;
+                                                    }
+                                                }
+                                                
+                                                if(!containsSameValue)
+                                                    valuesSame.Add(values);
+
+                                                //INSERT THE VALUES FROM ROW INTO SELECTED TABLE
+                                                if (DatabaseConn.CheckConnection() && values != null && values.Count() > 0)
+                                                {
+                                                    if (!differentValuesCheckBox.Checked || (differentValuesCheckBox.Checked && !containsSameValue))
+                                                    {
+                                                        rowsAffected = DatabaseConn.InsertIntoTable(databaseName, tableName, values, columnsOfTable, parseDateTimeCheckBox.Checked, !dateTimeTypeCheckBox.Checked, addUniqueKeyCheckBox.Checked, addUniqueKeyCheckBox.Checked ? (!string.IsNullOrEmpty(uniqueIndexPositionTextBox.Text) && !string.IsNullOrWhiteSpace(uniqueIndexPositionTextBox.Text) ? uniqueIndexPositionTextBox.Text : "1") : "-1");
+                                                        invokeAction = () => toolStripProgressBar.PerformStep();
+                                                        statusStrip.Invoke(invokeAction);
+                                                    }
                                                 }
                                             }
 
@@ -850,11 +847,11 @@ namespace DatabaseLoader
                                         {
                                             if (tableNameComboBox.Enabled)
                                             {
-                                                tableNameComboBox.Enabled = true;
-                                                tableNameComboBox.Invalidate();
+                                                tableNameComboBox.Enabled = false;                                               
                                             }
                                             if (tableNameComboBox.Items.Count > 0)
                                                 tableNameComboBox.Items.Clear();
+                                            tableNameComboBox.Invalidate();
                                         };
                                         tableNameComboBox.Invoke(invokeAction);
 
@@ -1055,11 +1052,11 @@ namespace DatabaseLoader
 
                     if (tableNameComboBox.Enabled)
                     {
-                        tableNameComboBox.Enabled = false;
-                        tableNameComboBox.Invalidate();
+                        tableNameComboBox.Enabled = false;                       
                     }
                     if (tableNameComboBox.Items.Count > 0)
                         tableNameComboBox.Items.Clear();
+                    tableNameComboBox.Invalidate();
 
                     if (columnsOfCsvLabel.Enabled)
                         columnsOfCsvLabel.Enabled = false;
@@ -1109,8 +1106,10 @@ namespace DatabaseLoader
                         differentValuesCheckBox.Enabled = false;
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                MessageBox.Show(ex.StackTrace);
+
                 commandExecutionStatusLabel.Visible = true;
                 commandExecutionStatusLabel.ForeColor = Color.Red;
                 commandExecutionStatusLabel.Text = "[Error2] An Error Occurred During Insertion Process";
@@ -1128,11 +1127,11 @@ namespace DatabaseLoader
 
                 if (tableNameComboBox.Enabled)
                 {
-                    tableNameComboBox.Enabled = false;
-                    tableNameComboBox.Invalidate();
+                    tableNameComboBox.Enabled = false;                   
                 }
                 if (tableNameComboBox.Items.Count > 0)
                     tableNameComboBox.Items.Clear();
+                tableNameComboBox.Invalidate();
 
                 if (columnsOfCsvLabel.Enabled)
                     columnsOfCsvLabel.Enabled = false;
@@ -1244,7 +1243,7 @@ namespace DatabaseLoader
                             else
                                 columnsOfCsv.Add(Int32.Parse(columnOrRowNumberAsText));
                         }
-                            
+
                         startFromComma = true;
                         startFromDash = false;
                         columnOrRowNumberAsText = "";
@@ -1276,11 +1275,11 @@ namespace DatabaseLoader
 
             if (tableNameComboBox.Enabled)
             {
-                tableNameComboBox.Enabled = false;
-                tableNameComboBox.Invalidate();
+                tableNameComboBox.Enabled = false;                
             }
             if (tableNameComboBox.Items.Count > 0)
                 tableNameComboBox.Items.Clear();
+            tableNameComboBox.Invalidate();
 
             commandExecutionStatusLabel.Visible = false;
 
