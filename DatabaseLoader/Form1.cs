@@ -82,7 +82,7 @@ namespace DatabaseLoader
             tableNameComboBox.Enabled = false;
             insertButton.Enabled = false;
             loadingCircle.Visible = false;
-            loadingStatusLabel.ForeColor = Color.ForestGreen;
+            loadingStatusLabel.ForeColor = Color.Green;
             loadingStatusLabel.Visible = false;
             openFileDialog.Filter = "CSV Files (*.csv) | *.csv";
             openFileDialog.Title = "Select CSV File";
@@ -102,6 +102,7 @@ namespace DatabaseLoader
             uniqueIndexStartValueTextBox.Enabled = false;
             selectRowIndexesCheckBox.Enabled = false;
             differentValuesCheckBox.Enabled = false;
+            addWhenDifferentCheckBox.Enabled = false;
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
@@ -227,6 +228,13 @@ namespace DatabaseLoader
                                     dateTimeTypeCheckBox.Enabled = true;
                             };
                             dateTimeTypeCheckBox.Invoke(invokeAction);
+
+                            invokeAction = () =>
+                            {
+                                if (!addWhenDifferentCheckBox.Enabled && isFileOpened && addUniqueKeyCheckBox.Checked)
+                                    addWhenDifferentCheckBox.Enabled = true;
+                            };
+                            addWhenDifferentCheckBox.Invoke(invokeAction);
 
                             invokeAction = () =>
                             {
@@ -367,6 +375,13 @@ namespace DatabaseLoader
                                     differentValuesCheckBox.Enabled = true;
                             };
                             differentValuesCheckBox.Invoke(invokeAction);
+
+                            invokeAction = () =>
+                            {
+                                if (addWhenDifferentCheckBox.Enabled)
+                                    addWhenDifferentCheckBox.Enabled = false;
+                            };
+                            addWhenDifferentCheckBox.Invoke(invokeAction);
                         }
                         Action invokeAction2 = () =>
                         {
@@ -498,6 +513,13 @@ namespace DatabaseLoader
                                 differentValuesCheckBox.Enabled = false;
                         };
                         differentValuesCheckBox.Invoke(invokeAction);
+
+                        invokeAction = () =>
+                        {
+                            if (addWhenDifferentCheckBox.Enabled)
+                                addWhenDifferentCheckBox.Enabled = false;
+                        };
+                        addWhenDifferentCheckBox.Invoke(invokeAction);
                     }
                 });
                 connectThread.Start();
@@ -556,6 +578,7 @@ namespace DatabaseLoader
                         int valueIndex = 0;
                         int stepCount = -1;
                         int lastRange = -1;
+                        int firstRange = -1;
 
                         if (readCsvThread == null || !readCsvThread.IsAlive)
                         {
@@ -584,13 +607,16 @@ namespace DatabaseLoader
                                 invokeAction = () => tableNameComboBox.Enabled = false;
                                 tableNameComboBox.Invoke(invokeAction);
 
+                                invokeAction = () => connectButton.Enabled = false;
+                                connectButton.Invoke(invokeAction);
+
                                 if (csvStream != null)
                                 {
-                                    columnsOfCsv = ParseColumnOrRowIndexes(columnsOfCsvTextBox.Text);
-                                    skipRowsOfCsv = ParseColumnOrRowIndexes(skipRowsTextBox.Text);
-                                    columnsOfTable = ParseColumnOrRowIndexes(columnsOfTableTextBox.Text);
+                                    columnsOfCsv = ParseColumnOrRowIndexes(columnsOfCsvTextBox.Text, false);
+                                    skipRowsOfCsv = ParseColumnOrRowIndexes(skipRowsTextBox.Text, true);
+                                    columnsOfTable = ParseColumnOrRowIndexes(columnsOfTableTextBox.Text, true);
 
-                                    if (performStepCheckBox.Checked && columnsOfCsv != null)
+                                    if (performStepCheckBox.Checked && skipRowsOfCsv != null)
                                     {
                                         stepCount = skipRowsOfCsv[0];
                                     }
@@ -698,7 +724,32 @@ namespace DatabaseLoader
 
                                                     if (columnsOfCsv != null)
                                                     {
-                                                        values = new object[columnsOfCsv.Count];
+                                                        int columnsOfCsvCount = 0;
+                                                        for (int i = 0; i < columnsOfCsv.Count; i++)
+                                                        {
+                                                            if (columnsOfCsv.ElementAt(i) > 0)
+                                                                columnsOfCsvCount++;
+                                                            else
+                                                            {
+                                                                if (firstRange == -1 && lastRange == -1)
+                                                                {
+                                                                    firstRange = columnsOfCsv.ElementAt(i) * -1;
+                                                                    lastRange = columnsOfCsv.ElementAt(i + 1) * -1;
+                                                                }
+                                                                else
+                                                                {
+                                                                    firstRange = -1;
+                                                                    lastRange = -1;
+                                                                }
+
+                                                                for (int j = firstRange; j <= lastRange; j++)
+                                                                {
+                                                                    columnsOfCsvCount++;
+                                                                }
+                                                            }
+                                                        }
+
+                                                        values = new object[columnsOfCsvCount];
                                                     }
                                                     else
                                                     {
@@ -708,63 +759,37 @@ namespace DatabaseLoader
 
                                                 lastRange = -1;
                                                 string csvRowTemp = csvRow;
-                                                for (int i = 1; i <= totalColumns; i++)
+                                                for (int i = 0; i < columnsOfCsv.Count; i++)
                                                 {
-                                                    if (values != null && columnsOfCsv != null && columnIndex < columnsOfCsv.Count && ((i != columnsOfCsv.ElementAt(columnIndex) && i != columnsOfCsv.ElementAt(columnIndex) * -1) || (lastRange != -1 && i > lastRange)))
+                                                    if (values != null && valueIndex < values.Length)
                                                     {
-                                                        //GO TO NEXT ELEMENT
-                                                        if (isDelimeterEntered)
-                                                            csvRowTemp = csvRowTemp.Substring(csvRowTemp.IndexOf(delimiterTextBox.Text.ElementAt(0)) + 1);
+                                                        if (columnsOfCsv.ElementAt(i) > 0)
+                                                        {
+                                                            values[valueIndex] = GetElementFromCsvRow(columnsOfCsv.ElementAt(i), totalColumns, csvRow, isDelimeterEntered);
+                                                            valueIndex++;
+                                                        }
                                                         else
                                                         {
-                                                            if (csvRowTemp.Contains(","))
-                                                                csvRowTemp = csvRowTemp.Substring(csvRowTemp.IndexOf(",") + 1);
-                                                            else if (csvRowTemp.Contains(";"))
-                                                                csvRowTemp = csvRowTemp.Substring(csvRowTemp.IndexOf(";") + 1);
-                                                        }
-                                                    }
-                                                    else if (values != null && valueIndex < values.Length)
-                                                    {
-                                                        if ((!isDelimeterEntered && !csvRowTemp.StartsWith(",") && !csvRowTemp.StartsWith(";")) || (isDelimeterEntered && !csvRowTemp.StartsWith(delimiterTextBox.Text.ElementAt(0).ToString())))
-                                                        {
-                                                            if (isDelimeterEntered)
-                                                                values[valueIndex] = csvRowTemp.Substring(0, csvRowTemp.IndexOf(delimiterTextBox.Text.ElementAt(0))).Replace("\"\"", "");
+                                                            if (firstRange == -1 && lastRange == -1)
+                                                            {
+                                                                firstRange = columnsOfCsv.ElementAt(i) * -1;
+                                                                lastRange = columnsOfCsv.ElementAt(i + 1) * -1;
+                                                            }
                                                             else
                                                             {
-                                                                if (csvRowTemp.Contains(","))
-                                                                    values[valueIndex] = csvRowTemp.Substring(0, csvRowTemp.IndexOf(",")).Replace("\"\"", "");
-                                                                else if (csvRowTemp.Contains(";"))
-                                                                    values[valueIndex] = csvRowTemp.Substring(0, csvRowTemp.IndexOf(";")).Replace("\"\"", "");
-                                                            }
-
-                                                            valueIndex++;
-                                                        }
-                                                        else
-                                                        {
-                                                            values[valueIndex] = null;
-                                                            valueIndex++;
-                                                        }
-
-                                                        //GO TO NEXT ELEMENT
-                                                        if (isDelimeterEntered)
-                                                            csvRowTemp = csvRowTemp.Substring(csvRowTemp.IndexOf(delimiterTextBox.Text.ElementAt(0)) + 1);
-                                                        else
-                                                        {
-                                                            if (csvRowTemp.Contains(","))
-                                                                csvRowTemp = csvRowTemp.Substring(csvRowTemp.IndexOf(",") + 1);
-                                                            else if (csvRowTemp.Contains(";"))
-                                                                csvRowTemp = csvRowTemp.Substring(csvRowTemp.IndexOf(";") + 1);
-                                                        }
-
-                                                        if (columnsOfCsv != null && columnIndex < columnsOfCsv.Count && i == columnsOfCsv.ElementAt(columnIndex) * -1)
-                                                        {
-                                                            if (lastRange == -1)
-                                                                lastRange = columnsOfCsv.ElementAt(columnIndex + 1);
-                                                            else
+                                                                firstRange = -1;
                                                                 lastRange = -1;
-                                                        }
+                                                            }                                                          
 
-                                                        columnIndex++;
+                                                            for (int j = firstRange; j <= lastRange; j++)
+                                                            {
+                                                                if(valueIndex < values.Length)
+                                                                {
+                                                                    values[valueIndex] = GetElementFromCsvRow(firstRange, totalColumns, csvRow, isDelimeterEntered);
+                                                                    valueIndex++;
+                                                                }
+                                                            }
+                                                        }                                                
                                                     }
                                                 }
 
@@ -774,20 +799,18 @@ namespace DatabaseLoader
                                                     {
                                                         if (valuesSame.ElementAt(i)[j] == values[j])
                                                             containsSameValue = true;
-                                                        else
-                                                            containsSameValue = false;
                                                     }
                                                 }
                                                 
-                                                if(!containsSameValue)
+                                                if((differentValuesCheckBox.Checked || addWhenDifferentCheckBox.Checked) && !containsSameValue)
                                                     valuesSame.Add(values);
 
                                                 //INSERT THE VALUES FROM ROW INTO SELECTED TABLE
                                                 if (DatabaseConn.CheckConnection() && values != null && values.Count() > 0)
                                                 {
-                                                    if (!differentValuesCheckBox.Checked || (differentValuesCheckBox.Checked && !containsSameValue))
+                                                    if (!differentValuesCheckBox.Checked || (differentValuesCheckBox.Checked && !containsSameValue) || (addWhenDifferentCheckBox.Checked && !differentValuesCheckBox.Checked))
                                                     {
-                                                        rowsAffected = DatabaseConn.InsertIntoTable(databaseName, tableName, values, columnsOfTable, parseDateTimeCheckBox.Checked, !dateTimeTypeCheckBox.Checked, addUniqueKeyCheckBox.Checked, addUniqueKeyCheckBox.Checked ? (!string.IsNullOrEmpty(uniqueIndexPositionTextBox.Text) && !string.IsNullOrWhiteSpace(uniqueIndexPositionTextBox.Text) ? uniqueIndexPositionTextBox.Text : "1") : "-1");
+                                                        rowsAffected = DatabaseConn.InsertIntoTable(databaseName, tableName, values, columnsOfTable, parseDateTimeCheckBox.Checked, !dateTimeTypeCheckBox.Checked, addUniqueKeyCheckBox.Checked, addUniqueKeyCheckBox.Checked ? (!string.IsNullOrEmpty(uniqueIndexPositionTextBox.Text) && !string.IsNullOrWhiteSpace(uniqueIndexPositionTextBox.Text) ? uniqueIndexPositionTextBox.Text : "1") : "-1", addWhenDifferentCheckBox.Checked, containsSameValue);
                                                         invokeAction = () => toolStripProgressBar.PerformStep();
                                                         statusStrip.Invoke(invokeAction);
                                                     }
@@ -807,7 +830,7 @@ namespace DatabaseLoader
                                             invokeAction = () =>
                                             {
                                                 commandExecutionStatusLabel.Visible = true;
-                                                commandExecutionStatusLabel.ForeColor = Color.Green;
+                                                commandExecutionStatusLabel.ForeColor = Color.Chartreuse;
                                                 commandExecutionStatusLabel.Text = "Insertion Successful";
                                             };
                                             statusStrip.Invoke(invokeAction);
@@ -835,6 +858,9 @@ namespace DatabaseLoader
 
                                         invokeAction = () => databaseNameTextBox.Enabled = true;
                                         databaseNameTextBox.Invoke(invokeAction);
+
+                                        invokeAction = () => connectButton.Enabled = true;
+                                        connectButton.Invoke(invokeAction);
 
                                         invokeAction = () =>
                                         {
@@ -955,6 +981,13 @@ namespace DatabaseLoader
                                                 differentValuesCheckBox.Enabled = false;
                                         };
                                         differentValuesCheckBox.Invoke(invokeAction);
+
+                                        invokeAction = () =>
+                                        {
+                                            if (addWhenDifferentCheckBox.Enabled)
+                                                addWhenDifferentCheckBox.Enabled = false;
+                                        };
+                                        addWhenDifferentCheckBox.Invoke(invokeAction);
                                     }
                                 }
                             });
@@ -976,6 +1009,7 @@ namespace DatabaseLoader
                         commandExecutionStatusLabel.Text = "[Error1] No Database Connection is Active";
 
                         databaseNameTextBox.Enabled = true;
+                        connectButton.Enabled = true;
 
                         if (insertButton.Enabled)
                             insertButton.Enabled = false;
@@ -986,7 +1020,9 @@ namespace DatabaseLoader
                             tableNameComboBox.Invalidate();
                         }
                         if (tableNameComboBox.Items.Count > 0)
-                            tableNameComboBox.Items.Clear();
+                            tableNameComboBox.Items.Clear();                          
+
+                        connectButton.Enabled = true;
 
                         if (columnsOfCsvLabel.Enabled)
                             columnsOfCsvLabel.Enabled = false;
@@ -1031,6 +1067,9 @@ namespace DatabaseLoader
 
                         if (differentValuesCheckBox.Enabled)
                             differentValuesCheckBox.Enabled = false;
+
+                        if (addWhenDifferentCheckBox.Enabled)
+                            addWhenDifferentCheckBox.Enabled = false;
                     }
                 }
                 else
@@ -1046,6 +1085,7 @@ namespace DatabaseLoader
                     connectionStatusLabel.Text = "Connection Closed";
 
                     databaseNameTextBox.Enabled = true;
+                    connectButton.Enabled = true;
 
                     if (insertButton.Enabled)
                         insertButton.Enabled = false;
@@ -1104,11 +1144,14 @@ namespace DatabaseLoader
 
                     if (differentValuesCheckBox.Enabled)
                         differentValuesCheckBox.Enabled = false;
+
+                    if (addWhenDifferentCheckBox.Enabled)
+                        addWhenDifferentCheckBox.Enabled = false;
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                MessageBox.Show(ex.StackTrace);
+                //MessageBox.Show(ex.StackTrace);
 
                 commandExecutionStatusLabel.Visible = true;
                 commandExecutionStatusLabel.ForeColor = Color.Red;
@@ -1121,6 +1164,7 @@ namespace DatabaseLoader
                 connectionStatusLabel.Text = "Connection Closed";
 
                 databaseNameTextBox.Enabled = true;
+                connectButton.Enabled = true;
 
                 if (insertButton.Enabled)
                     insertButton.Enabled = false;
@@ -1179,10 +1223,61 @@ namespace DatabaseLoader
 
                 if (differentValuesCheckBox.Enabled)
                     differentValuesCheckBox.Enabled = false;
+
+                if (addWhenDifferentCheckBox.Enabled)
+                    addWhenDifferentCheckBox.Enabled = false;
             }
         }
 
-        private List<int> ParseColumnOrRowIndexes(string columnsOrRowsFromTextBoxAsText)
+        private string GetElementFromCsvRow(int pos, int totalColumns, string csvRowTemp, bool isDelimeterEntered)
+        {
+            for (int i = 1; i < pos; i++)
+            {
+                //GO TO NEXT ELEMENT
+                if (csvRowTemp.StartsWith("\""))
+                {
+                    csvRowTemp = csvRowTemp.Substring(1);
+                    csvRowTemp = csvRowTemp.Substring(csvRowTemp.IndexOf("\"") + 2);
+                }
+                else
+                {
+                    if (isDelimeterEntered)
+                        csvRowTemp = csvRowTemp.Substring(csvRowTemp.IndexOf(delimiterTextBox.Text.ElementAt(0)) + 1);
+                    else
+                    {
+                        if (csvRowTemp.Contains(","))
+                            csvRowTemp = csvRowTemp.Substring(csvRowTemp.IndexOf(",") + 1);
+                        else if (csvRowTemp.Contains(";"))
+                            csvRowTemp = csvRowTemp.Substring(csvRowTemp.IndexOf(";") + 1);
+                    }
+                }
+            }
+
+            if ((!isDelimeterEntered && !csvRowTemp.StartsWith(",") && !csvRowTemp.StartsWith(";")) || (isDelimeterEntered && !csvRowTemp.StartsWith(delimiterTextBox.Text.ElementAt(0).ToString())))
+            {
+                if (csvRowTemp.StartsWith("\""))
+                {
+                    csvRowTemp = csvRowTemp.Substring(1);
+                    return csvRowTemp.Substring(0, csvRowTemp.IndexOf("\""));
+                }
+                else
+                {
+                    if (isDelimeterEntered)
+                        return csvRowTemp.Substring(0, csvRowTemp.IndexOf(delimiterTextBox.Text.ElementAt(0))).Replace("\"", "");
+                    else
+                    {
+                        if (csvRowTemp.Contains(","))
+                            return csvRowTemp.Substring(0, csvRowTemp.IndexOf(",")).Replace("\"", "");
+                        else
+                            return csvRowTemp.Substring(0, csvRowTemp.IndexOf(";")).Replace("\"", "");
+                    }
+                }
+            }
+            else
+                return null;
+        }
+
+        private List<int> ParseColumnOrRowIndexes(string columnsOrRowsFromTextBoxAsText, bool sort)
         {
             if (!Regex.IsMatch(columnsOrRowsFromTextBoxAsText, "^$"))
             {
@@ -1252,12 +1347,16 @@ namespace DatabaseLoader
                     {
                         if (columnOrRowNumberAsText != "" && !columnsOfCsv.Contains(Int32.Parse(columnOrRowNumberAsText)))
                             columnsOfCsv.Add(Int32.Parse(columnOrRowNumberAsText));
+
                         startFromDash = true;
                         startFromComma = false;
                         columnOrRowNumberAsText = "";
                     }
                 }
-                columnsOfCsv.Sort();
+
+                if(sort)
+                    columnsOfCsv.Sort();
+
                 return columnsOfCsv;
             }
             else
@@ -1324,6 +1423,9 @@ namespace DatabaseLoader
 
             if (differentValuesCheckBox.Enabled)
                 differentValuesCheckBox.Enabled = false;
+
+            if (addWhenDifferentCheckBox.Enabled)
+                addWhenDifferentCheckBox.Enabled = false;
         }
 
         private void openFileDialog_FileOk(object sender, CancelEventArgs e)
@@ -1424,11 +1526,13 @@ namespace DatabaseLoader
             {
                 uniqueIndexPositionTextBox.Enabled = true;
                 uniqueIndexStartValueTextBox.Enabled = true;
+                addWhenDifferentCheckBox.Enabled = true;
             }
             else
             {
                 uniqueIndexPositionTextBox.Enabled = false;
                 uniqueIndexStartValueTextBox.Enabled = false;
+                addWhenDifferentCheckBox.Enabled = false;
             }
         }
 

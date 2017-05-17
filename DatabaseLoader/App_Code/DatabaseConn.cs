@@ -8,6 +8,7 @@ using System.Data.Linq.Mapping;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -72,7 +73,7 @@ namespace DatabaseLoader.App_Code
             return tableNames;
         }
 
-        public static int InsertIntoTable(String databaseName, String tableName, dynamic[] values, List<int> insertColumnNumbers, bool parseDateTime, bool isDateTimeString, bool addUniqueKey, string uniqueIndexPos)
+        public static int InsertIntoTable(String databaseName, String tableName, dynamic[] values, List<int> insertColumnNumbers, bool parseDateTime, bool isDateTimeString, bool addUniqueKey, string uniqueIndexPos, bool increaseUniqueIndexWhenRowDifferent, bool isRowSame)
         {
             try
             {
@@ -80,12 +81,27 @@ namespace DatabaseLoader.App_Code
 
                 String commandString = "INSERT INTO " + tableName + "(";
                 int columnIndex = 0;
+                int lastRange = -1;
 
                 for (int i = 0; i < columnsOfSpecifiedTable.Rows.Count; i++)
                 {
-                    if ((insertColumnNumbers != null && (i + 1) == insertColumnNumbers[columnIndex]) || insertColumnNumbers == null)
+                    if ((insertColumnNumbers != null && columnIndex < insertColumnNumbers.Count && (i + 1) == insertColumnNumbers[columnIndex]) || insertColumnNumbers == null || ((i + 1) == insertColumnNumbers[columnIndex] * -1) || (lastRange != -1 && i <= lastRange))
                     {
-                        if (i != columnsOfSpecifiedTable.Rows.Count - 1)
+                        if(insertColumnNumbers != null && (i + 1) == insertColumnNumbers[columnIndex] * -1)
+                        {
+                            if (lastRange == -1)
+                                lastRange = insertColumnNumbers[columnIndex + 1] * -1;
+                            else if(i == lastRange)
+                            {
+                                lastRange = -1;
+                                columnIndex++;
+                            }
+                        }
+
+                        if (lastRange == -1)
+                            columnIndex++;
+                        
+                        if (i != columnsOfSpecifiedTable.Rows.Count - 1 && ((insertColumnNumbers != null && columnIndex != insertColumnNumbers.Count) || insertColumnNumbers == null))
                         {
                             commandString += columnsOfSpecifiedTable.Rows[i].ItemArray[3] + ", ";
                         }
@@ -93,7 +109,6 @@ namespace DatabaseLoader.App_Code
                         {
                             commandString += columnsOfSpecifiedTable.Rows[i].ItemArray[3] + ")";
                         }
-                        columnIndex++;
                     }
                 }
 
@@ -122,165 +137,205 @@ namespace DatabaseLoader.App_Code
                     if (addUniqueKey && (commandParameterCount + 1).ToString().Equals(uniqueIndexPos))
                     {                      
                         sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), UniqueIndex.GetUniqueIndex()));
-                        UniqueIndex.IncreaseUniqueIndex();
+                        if(!isRowSame)
+                            UniqueIndex.IncreaseUniqueIndex();
                         commandParameterCount++;
+
+                        columnDataTypeAsText = (string)columnsOfSpecifiedTable.Rows[commandParameterCount].ItemArray[7];
+                        columnDataType = SqlColType.GetSqlColumnType(columnDataTypeAsText);
                     }
 
-                    DateTime futureInitialDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day + 1, DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second);
-                    DateTime dateTimeValue = futureInitialDate;
-                    int dateTimeCount = 0;
-                    bool parsed = false;
-                    try
+                    if (valueIndex < values.Length)
                     {
-                        DateTime.TryParse(values[valueIndex].ToString(), out dateTimeValue);
-                        parsed = true;
-                    }
-                    catch   { }
-                    if (parseDateTime && parsed && !dateTimeValue.Equals(futureInitialDate))
-                    {
-                        DataRowCollection dataRowCollection = columnsOfSpecifiedTable.Rows;
-                        foreach (DataRow dataRow in dataRowCollection)
+                        DateTime futureInitialDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day + 1, DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second);
+                        DateTime dateTimeValue = futureInitialDate;
+                        int dateTimeCount = 0;
+                        bool parsed = false;
+                        try
                         {
-                            string columnName = dataRow.ItemArray[3].ToString();
-                            columnDataTypeAsText = (string)columnsOfSpecifiedTable.Rows[dateTimeCount].ItemArray[7];
-                            columnDataType = SqlColType.GetSqlColumnType(columnDataTypeAsText);
-
-                            if (columnName.ToLower().Contains("day"))
-                            {
-                                if (isDateTimeString)
-                                {
-                                    if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Day < 10 ? "0" + dateTimeValue.Day : dateTimeValue.Day.ToString())))
-                                        sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Day < 10 ? "0" + dateTimeValue.Day : dateTimeValue.Day.ToString()));
-                                }
-                                else
-                                {
-                                    if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Day)))
-                                        sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Day));
-                                }
-                                commandParameterCount++;
-                            }
-                            else if (columnName.ToLower().Contains("month"))
-                            {
-                                if (isDateTimeString)
-                                {
-                                    if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Month < 10 ? "0" + dateTimeValue.Month : dateTimeValue.Month.ToString())))
-                                        sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Month < 10 ? "0" + dateTimeValue.Month : dateTimeValue.Month.ToString()));
-                                }
-                                else
-                                {
-                                    if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Month)))
-                                        sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Month));
-                                }
-                                commandParameterCount++;
-                            }
-                            else if (columnName.ToLower().Contains("year"))
-                            {
-                                if (isDateTimeString)
-                                {
-                                    if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Year < 10 ? "0" + dateTimeValue.Year : dateTimeValue.Year.ToString())))
-                                        sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Year < 10 ? "0" + dateTimeValue.Year : dateTimeValue.Year.ToString()));
-                                }
-                                else
-                                {
-                                    if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Year)))
-                                        sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Year));
-                                }
-                                commandParameterCount++;
-                            }
-                            else if (columnName.ToLower().Contains("hour"))
-                            {
-                                if (isDateTimeString)
-                                {
-                                    if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Hour < 10 ? "0" + dateTimeValue.Hour : dateTimeValue.Hour.ToString())))
-                                        sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Hour < 10 ? "0" + dateTimeValue.Hour : dateTimeValue.Hour.ToString()));
-                                }
-                                else
-                                {
-                                    if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Hour)))
-                                        sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Hour));
-                                }
-                                commandParameterCount++;
-                            }
-                            else if (columnName.ToLower().Contains("minute"))
-                            {
-                                if (isDateTimeString)
-                                {
-                                    if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Minute < 10 ? "0" + dateTimeValue.Minute : dateTimeValue.Minute.ToString())))
-                                        sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Minute < 10 ? "0" + dateTimeValue.Minute : dateTimeValue.Minute.ToString()));
-                                }
-                                else
-                                {
-                                    if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Minute)))
-                                        sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Minute));
-                                }
-                                commandParameterCount++;
-                            }
-                            else if (columnName.ToLower().Contains("second"))
-                            {
-                                if (isDateTimeString)
-                                {
-                                    if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Second < 10 ? "0" + dateTimeValue.Second : dateTimeValue.Second.ToString())))
-                                        sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Second < 10 ? "0" + dateTimeValue.Second : dateTimeValue.Second.ToString()));
-                                }
-                                else
-                                {
-                                    if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Second)))
-                                        sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Second));
-                                }
-                                commandParameterCount++;
-                            }
-                            else if (columnName.ToLower().Contains("millisecond"))
-                            {
-                                if (isDateTimeString)
-                                {
-                                    if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Millisecond < 10 ? "0" + dateTimeValue.Millisecond : dateTimeValue.Millisecond.ToString())))
-                                        sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Millisecond < 10 ? "0" + dateTimeValue.Millisecond : dateTimeValue.Millisecond.ToString()));
-                                }
-                                else
-                                {
-                                    if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Millisecond)))
-                                        sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Millisecond));
-                                }
-                                commandParameterCount++;
-                            }
-                            else if (columnName.ToLower().Contains("dayofyear"))
-                            {
-                                if (isDateTimeString)
-                                {
-                                    if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.DayOfYear < 10 ? "0" + dateTimeValue.DayOfYear : dateTimeValue.DayOfYear.ToString())))
-                                        sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.DayOfYear < 10 ? "0" + dateTimeValue.DayOfYear : dateTimeValue.DayOfYear.ToString()));
-                                }
-                                else
-                                {
-                                    if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.DayOfYear)))
-                                        sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.DayOfYear));
-                                }
-                                commandParameterCount++;
-                            }
-                            else if (columnName.ToLower().Contains("dayofweek"))
-                            {
-                                if (isDateTimeString)
-                                {
-                                    if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), (int)dateTimeValue.DayOfWeek < 10 ? "0" + dateTimeValue.DayOfWeek : dateTimeValue.DayOfWeek.ToString())))
-                                        sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), (int)dateTimeValue.DayOfWeek < 10 ? "0" + dateTimeValue.DayOfWeek : dateTimeValue.DayOfWeek.ToString()));
-                                }
-                                else
-                                {
-                                    if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), (int)dateTimeValue.DayOfWeek)))
-                                        sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), (int)dateTimeValue.DayOfWeek));
-                                }
-                                commandParameterCount++;
-                            }
-
-                            dateTimeCount++;
+                            DateTime.TryParse(values[valueIndex].ToString(), out dateTimeValue);
+                            parsed = true;
                         }
-                        valueIndex++;
+                        catch { }
+                        if (parseDateTime && parsed && !dateTimeValue.Equals(futureInitialDate))
+                        {
+                            DataRowCollection dataRowCollection = columnsOfSpecifiedTable.Rows;
+                            foreach (DataRow dataRow in dataRowCollection)
+                            {
+                                string columnName = dataRow.ItemArray[3].ToString();
+                                columnDataTypeAsText = (string)columnsOfSpecifiedTable.Rows[dateTimeCount].ItemArray[7];
+                                columnDataType = SqlColType.GetSqlColumnType(columnDataTypeAsText);
+
+                                if (columnName.ToLower().Contains("day"))
+                                {
+                                    if (isDateTimeString)
+                                    {
+                                        if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Day < 10 ? "0" + dateTimeValue.Day : dateTimeValue.Day.ToString())))
+                                            sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Day < 10 ? "0" + dateTimeValue.Day : dateTimeValue.Day.ToString()));
+                                    }
+                                    else
+                                    {
+                                        if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Day)))
+                                            sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Day));
+                                    }
+                                    commandParameterCount++;
+                                }
+                                else if (columnName.ToLower().Contains("month"))
+                                {
+                                    if (isDateTimeString)
+                                    {
+                                        if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Month < 10 ? "0" + dateTimeValue.Month : dateTimeValue.Month.ToString())))
+                                            sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Month < 10 ? "0" + dateTimeValue.Month : dateTimeValue.Month.ToString()));
+                                    }
+                                    else
+                                    {
+                                        if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Month)))
+                                            sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Month));
+                                    }
+                                    commandParameterCount++;
+                                }
+                                else if (columnName.ToLower().Contains("year"))
+                                {
+                                    if (isDateTimeString)
+                                    {
+                                        if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Year < 10 ? "0" + dateTimeValue.Year : dateTimeValue.Year.ToString())))
+                                            sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Year < 10 ? "0" + dateTimeValue.Year : dateTimeValue.Year.ToString()));
+                                    }
+                                    else
+                                    {
+                                        if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Year)))
+                                            sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Year));
+                                    }
+                                    commandParameterCount++;
+                                }
+                                else if (columnName.ToLower().Contains("hour"))
+                                {
+                                    if (isDateTimeString)
+                                    {
+                                        if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Hour < 10 ? "0" + dateTimeValue.Hour : dateTimeValue.Hour.ToString())))
+                                            sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Hour < 10 ? "0" + dateTimeValue.Hour : dateTimeValue.Hour.ToString()));
+                                    }
+                                    else
+                                    {
+                                        if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Hour)))
+                                            sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Hour));
+                                    }
+                                    commandParameterCount++;
+                                }
+                                else if (columnName.ToLower().Contains("minute"))
+                                {
+                                    if (isDateTimeString)
+                                    {
+                                        if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Minute < 10 ? "0" + dateTimeValue.Minute : dateTimeValue.Minute.ToString())))
+                                            sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Minute < 10 ? "0" + dateTimeValue.Minute : dateTimeValue.Minute.ToString()));
+                                    }
+                                    else
+                                    {
+                                        if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Minute)))
+                                            sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Minute));
+                                    }
+                                    commandParameterCount++;
+                                }
+                                else if (columnName.ToLower().Contains("second"))
+                                {
+                                    if (isDateTimeString)
+                                    {
+                                        if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Second < 10 ? "0" + dateTimeValue.Second : dateTimeValue.Second.ToString())))
+                                            sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Second < 10 ? "0" + dateTimeValue.Second : dateTimeValue.Second.ToString()));
+                                    }
+                                    else
+                                    {
+                                        if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Second)))
+                                            sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Second));
+                                    }
+                                    commandParameterCount++;
+                                }
+                                else if (columnName.ToLower().Contains("millisecond"))
+                                {
+                                    if (isDateTimeString)
+                                    {
+                                        if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Millisecond < 10 ? "0" + dateTimeValue.Millisecond : dateTimeValue.Millisecond.ToString())))
+                                            sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Millisecond < 10 ? "0" + dateTimeValue.Millisecond : dateTimeValue.Millisecond.ToString()));
+                                    }
+                                    else
+                                    {
+                                        if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Millisecond)))
+                                            sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.Millisecond));
+                                    }
+                                    commandParameterCount++;
+                                }
+                                else if (columnName.ToLower().Contains("dayofyear"))
+                                {
+                                    if (isDateTimeString)
+                                    {
+                                        if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.DayOfYear < 10 ? "0" + dateTimeValue.DayOfYear : dateTimeValue.DayOfYear.ToString())))
+                                            sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.DayOfYear < 10 ? "0" + dateTimeValue.DayOfYear : dateTimeValue.DayOfYear.ToString()));
+                                    }
+                                    else
+                                    {
+                                        if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.DayOfYear)))
+                                            sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), dateTimeValue.DayOfYear));
+                                    }
+                                    commandParameterCount++;
+                                }
+                                else if (columnName.ToLower().Contains("dayofweek"))
+                                {
+                                    if (isDateTimeString)
+                                    {
+                                        if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), (int)dateTimeValue.DayOfWeek < 10 ? "0" + dateTimeValue.DayOfWeek : dateTimeValue.DayOfWeek.ToString())))
+                                            sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), (int)dateTimeValue.DayOfWeek < 10 ? "0" + dateTimeValue.DayOfWeek : dateTimeValue.DayOfWeek.ToString()));
+                                    }
+                                    else
+                                    {
+                                        if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), (int)dateTimeValue.DayOfWeek)))
+                                            sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), (int)dateTimeValue.DayOfWeek));
+                                    }
+                                    commandParameterCount++;
+                                }
+
+                                dateTimeCount++;
+                            }
+                            valueIndex++;
+                        }
+                        else if (commandParameterCount == sqlCommand.Parameters.Count)
+                        {
+                            if (values[valueIndex] as string != null)
+                            {
+                                string value = values[valueIndex];
+                                double value2;
+                                float value3;
+
+                                //value = value.Replace(".", ",");
+                                if (columnDataType == typeof(double))
+                                {
+                                    value2 = double.Parse(value, CultureInfo.InvariantCulture);
+                                    sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), value2));
+                                }
+                                else if(columnDataType == typeof(float))
+                                {
+                                    value3 = float.Parse(value, CultureInfo.InvariantCulture);
+                                    sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), value3));
+                                }
+                                else
+                                    sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), Convert.ChangeType(values[valueIndex], columnDataType)));
+                            }
+                            else
+                            {
+                                if (columnDataType == typeof(double))
+                                    sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), double.Parse("0.0", CultureInfo.InvariantCulture)));
+                                else if (columnDataType == typeof(float))
+                                    sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), float.Parse("0.0", CultureInfo.InvariantCulture)));
+                                else
+                                    sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), 0));
+                            }
+                            commandParameterCount++;
+                            valueIndex++;
+                        }
                     }
-                    else if (!sqlCommand.Parameters.Contains(new SqlParameter(commandParameterCount.ToString(), values[valueIndex])))
+                    else
                     {
-                        sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), Convert.ChangeType(values[valueIndex], columnDataType)));
+                        sqlCommand.Parameters.Add(new SqlParameter(commandParameterCount.ToString(), null));
                         commandParameterCount++;
-                        valueIndex++;
                     }
                 }
 
@@ -289,7 +344,7 @@ namespace DatabaseLoader.App_Code
             }
             catch(Exception ex)
             {
-                MessageBox.Show(ex.StackTrace);
+                //MessageBox.Show(ex.StackTrace);
 
                 return 0;
             }

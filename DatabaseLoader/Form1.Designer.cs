@@ -66,6 +66,7 @@
             this.uniqueIndexStartValueLabel = new MetroFramework.Controls.MetroLabel();
             this.selectRowIndexesCheckBox = new MaterialSkin.Controls.MaterialCheckBox();
             this.differentValuesCheckBox = new MaterialSkin.Controls.MaterialCheckBox();
+            this.addWhenDifferentCheckBox = new MaterialSkin.Controls.MaterialCheckBox();
             this.statusStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.clearSelectedFilePictureBox)).BeginInit();
             this.SuspendLayout();
@@ -637,12 +638,29 @@
             this.differentValuesCheckBox.Text = "Different Values";
             this.differentValuesCheckBox.UseVisualStyleBackColor = true;
             // 
+            // addWhenDifferentCheckBox
+            // 
+            this.addWhenDifferentCheckBox.Depth = 0;
+            this.addWhenDifferentCheckBox.Font = new System.Drawing.Font("Roboto", 10F);
+            this.addWhenDifferentCheckBox.ForeColor = System.Drawing.SystemColors.MenuHighlight;
+            this.addWhenDifferentCheckBox.Location = new System.Drawing.Point(618, 306);
+            this.addWhenDifferentCheckBox.Margin = new System.Windows.Forms.Padding(0);
+            this.addWhenDifferentCheckBox.MouseLocation = new System.Drawing.Point(-1, -1);
+            this.addWhenDifferentCheckBox.MouseState = MaterialSkin.MouseState.HOVER;
+            this.addWhenDifferentCheckBox.Name = "addWhenDifferentCheckBox";
+            this.addWhenDifferentCheckBox.Ripple = true;
+            this.addWhenDifferentCheckBox.Size = new System.Drawing.Size(153, 25);
+            this.addWhenDifferentCheckBox.TabIndex = 39;
+            this.addWhenDifferentCheckBox.Text = "Add When Different";
+            this.addWhenDifferentCheckBox.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(834, 436);
             this.ControlBox = false;
+            this.Controls.Add(this.addWhenDifferentCheckBox);
             this.Controls.Add(this.differentValuesCheckBox);
             this.Controls.Add(this.selectRowIndexesCheckBox);
             this.Controls.Add(this.uniqueIndexStartValueLabel);
@@ -734,6 +752,7 @@
         private MetroFramework.Controls.MetroLabel uniqueIndexStartValueLabel;
         private MaterialSkin.Controls.MaterialCheckBox selectRowIndexesCheckBox;
         private MaterialSkin.Controls.MaterialCheckBox differentValuesCheckBox;
+        private MaterialSkin.Controls.MaterialCheckBox addWhenDifferentCheckBox;
     }
 }
 

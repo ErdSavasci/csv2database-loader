@@ -14,7 +14,7 @@ namespace DatabaseLoader.App_Code
             switch (colType.ToLower())
             {
                 case "bigint":
-                    return typeof(long?);
+                    return typeof(long);
 
                 case "binary":
                 case "image":
@@ -23,7 +23,7 @@ namespace DatabaseLoader.App_Code
                     return typeof(byte[]);
 
                 case "bit":
-                    return typeof(bool?);
+                    return typeof(bool);
 
                 case "char":
                 case "nchar":
@@ -39,30 +39,33 @@ namespace DatabaseLoader.App_Code
                 case "date":
                 case "time":
                 case "datetime2":
-                    return typeof(DateTime?);
+                    return typeof(DateTime);
 
                 case "decimal":
                 case "money":
                 case "smallmoney":
-                    return typeof(decimal?);
+                    return typeof(decimal);
 
                 case "float":
-                    return typeof(double?);
+                    return typeof(double);
+
+                case "numeric":
+                    return typeof(float);
 
                 case "int":
-                    return typeof(int?);
+                    return typeof(int);
 
                 case "real":
-                    return typeof(float?);
+                    return typeof(float);
 
                 case "uniqueidentifier":
-                    return typeof(Guid?);
+                    return typeof(Guid);
 
                 case "smallint":
-                    return typeof(short?);
+                    return typeof(short);
 
                 case "tinyint":
-                    return typeof(byte?);
+                    return typeof(byte);
 
                 case "variant":
                 case "udt":
@@ -72,7 +75,7 @@ namespace DatabaseLoader.App_Code
                     return typeof(DataTable);
 
                 case "datetimeoffset":
-                    return typeof(DateTimeOffset?);
+                    return typeof(DateTimeOffset);
 
                 default:
                     throw new ArgumentOutOfRangeException("sqlType");
